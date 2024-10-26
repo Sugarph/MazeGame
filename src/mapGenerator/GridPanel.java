@@ -54,6 +54,8 @@ public class GridPanel extends JPanel {
                 ((Timer) e.getSource()).stop();
                 finishNode = dfsMaze.finishNode;
                 isRunning = false;
+                isFinished = true;
+
             }
 
         });
@@ -72,12 +74,11 @@ public class GridPanel extends JPanel {
             }
         }
         startNode.setStartPoint();
-        finishNode.setFinishPoint();
         isFinished = false;
         isRunning = false;
     }
 
-    public int[] convertGridTo1DArray() {
+    public int[] arrayConverter() {
         int[] gridArray = new int[maxCol * maxRow];
         int index = 0;
 

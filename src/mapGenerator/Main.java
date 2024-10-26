@@ -21,8 +21,8 @@ public class Main {
 
         GridPanel gridPanel1 = new GridPanel(nodePixelSize);
 
-        JButton startButton = new JButton("Generate Maze");
-        startButton.addActionListener(_ -> {
+        JButton mazeButton = new JButton("Generate Maze");
+        mazeButton.addActionListener(_ -> {
             if (!gridPanel1.isRunning && !gridPanel1.isFinished) {
                 gridPanel1.startMaze();
             }
@@ -33,8 +33,15 @@ public class Main {
 
         JButton startGameButton = new JButton("Start Game");
         startGameButton.addActionListener(_ -> {
-            Game game = new Game(gridPanel1.convertGridTo1DArray(), gridPanel1.maxCol, gridPanel1.maxRow, 64);
+            window.dispose();
+            Game game = new Game(gridPanel1.arrayConverter(), gridPanel1.maxCol, gridPanel1.maxRow, 64);
         });
+        Timer updateTimer = new Timer(25, _ -> {
+            mazeButton.setEnabled(!gridPanel1.isRunning && !gridPanel1.isFinished);
+            resetButton.setEnabled(!gridPanel1.isRunning && gridPanel1.isFinished);
+            startGameButton.setEnabled(!gridPanel1.isRunning && gridPanel1.isFinished);
+        });
+        updateTimer.start();
 
         mainGrid.gridx = 0;
         mainGrid.gridy = 0;
@@ -42,7 +49,7 @@ public class Main {
 
         mainGrid.gridy = 1;
         mainGrid.gridwidth = 1;
-        mainPanel.add(startButton, mainGrid);
+        mainPanel.add(mazeButton, mainGrid);
 
         JPanel buttonPanel = new JPanel(new GridBagLayout());
         GridBagConstraints buttonGrid = new GridBagConstraints();
