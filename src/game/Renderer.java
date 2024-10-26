@@ -43,9 +43,9 @@ public class Renderer {
 
     private void loadTextures() {
         try {
-            wallTexture = ImageIO.read(new File("sprites/Brickwall3_Texture.png"));
-            bloodWallTexture = ImageIO.read(new File("sprites/Brickwall_Texture.png"));
-            floorTexture = ImageIO.read(new File("sprites/Brickwall3_Texture.png"));
+            wallTexture = ImageIO.read(new File("sprites/Mainwall.png"));
+            bloodWallTexture = ImageIO.read(new File("sprites/Bloodywall.png"));
+            floorTexture = ImageIO.read(new File("sprites/Mainwall.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
