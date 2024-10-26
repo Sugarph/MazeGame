@@ -58,7 +58,7 @@ public class MazeDFSAlgorithm {
 
                 // Shadow spawning logic during generation
                 if (shadowNodes.size() < guaranteedShadows || random.nextInt(100) < maxShadowChance) {
-                    if (isValidShadowLocation(current)) {
+                    if (distanceCheck(current)) {
                         current.shadow = true;
                         shadowNodes.add(current);
                         current.setBackground(Color.yellow); // Visual indicator
@@ -107,8 +107,7 @@ public class MazeDFSAlgorithm {
         nodes[col][row].toggleWall();
     }
 
-    private boolean isValidShadowLocation(Node node) {
-        // Ensure the node is sufficiently far from the start and other shadows
+    private boolean distanceCheck(Node node) {
         if (distance(node, nodes[0][0]) < minDistanceFromStart) return false;
         for (Node shadow : shadowNodes) {
             if (distance(node, shadow) < minDistanceBetweenShadows) return false;

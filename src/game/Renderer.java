@@ -15,12 +15,18 @@ public class Renderer {
     private final MapGrid map;
     private final int tileSize;
     double fogFactor;
-    private BufferedImage wallTexture, floorTexture, bloodWallTexture;
+    private BufferedImage wallTexture, floorTexture, bloodWallTexture, dontMoveText, currentOverlay, finishTexture;
     private boolean flashlightOn = true;
     private List<Shadow> shadows = new ArrayList<>();
     private boolean bloodVisible;
     private SoundManager soundManager;
     private double[] depthArray = new double[240];
+    private boolean showText = false;
+    private int baseCenterX, baseCenterY;
+    private Random random;
+    private long lastJitterTime = 0;
+    private int jitterX = 0;
+    private int jitterY = 0;
 
     public Renderer(Player player, MapGrid map) {
         this.soundManager = new SoundManager();
@@ -36,8 +42,11 @@ public class Renderer {
                 }
             }
         }
+        random = new Random();
         loadTextures();
-        startHallucination();
+        startHallucination(2000 + random.nextInt(3000));
+        baseCenterX = (960 - dontMoveText.getWidth()) / 2; // Calculate the base center position
+        baseCenterY = (640 - dontMoveText.getHeight()) / 2;
 
     }
 
@@ -46,6 +55,9 @@ public class Renderer {
             wallTexture = ImageIO.read(new File("sprites/Mainwall.png"));
             bloodWallTexture = ImageIO.read(new File("sprites/Bloodywall.png"));
             floorTexture = ImageIO.read(new File("sprites/Mainwall.png"));
+            finishTexture = ImageIO.read(new File("sprites/Pentagramwall.png"));
+            dontMoveText = ImageIO.read(new File("sprites/Dontmove.png"));
+            currentOverlay = dontMoveText;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -60,6 +72,7 @@ public class Renderer {
         }
         drawShadows(g);
         flashlightEffect(g);
+        drawOverlay(g);
     }
 
     public double castRay(double rayAngle, Graphics2D g, int rayIndex) {
@@ -206,16 +219,25 @@ public class Renderer {
             double deg = Math.toRadians(rayAngle);
             double raFix = Math.cos(Math.toRadians(fixAngle(player.angle - rayAngle)));
 
+            // Find distance to floor using trigonometry
+            double worldX = player.x / 2 + Math.cos(deg) * 320 * 1.6 * 32 / dy / raFix;
+            double worldY = player.y / 2 - Math.sin(deg) * 320 * 1.6 * 32 / dy / raFix;
 
-            //Find distance to floor using trigonometry
-            //Then find texture coordinates using player position and ray angle
-            double textureX = Math.abs((int) (player.x / 2 + Math.cos(deg) * 320 * 1.6 * 32 / dy / raFix) * textureScaleFactor * 2);
-            double textureY = Math.abs((int) (player.y / 2 - Math.sin(deg) * 320 * 1.6 * 32 / dy / raFix) * textureScaleFactor * 2);
+            int tileX = (int) (worldX / tileSize*2);
+            int tileY = (int) (worldY / tileSize*2);
+
+            BufferedImage textureToUse = floorTexture;
+            if (map.getTileValue(tileX, tileY) == 4) {
+                textureToUse = finishTexture;
+            }
+            //find texture coordinates
+            double textureX = Math.abs((int) worldX * textureScaleFactor *2);
+            double textureY = Math.abs((int) worldY * textureScaleFactor *2);
 
             int actualTextureX = (int) (textureX % textureWidth);
             int actualTextureY = (int) (textureY % textureHeight);
 
-            int pixelColor = floorTexture.getRGB(actualTextureX, actualTextureY);
+            int pixelColor = textureToUse.getRGB(actualTextureX, actualTextureY);
             Color floorColor = new Color(pixelColor);
 
             Color foggyFloorColor = getFogWallColor(fogFactor, floorColor);
@@ -342,6 +364,7 @@ public class Renderer {
         int maxRenderDistance = 4 * tileSize;
 
         for (Shadow shadow : shadows) {
+            if (!shadow.visible) {continue;}
             double dx = shadow.x - player.x;
             double dy = shadow.y - player.y;
             double distance = Math.sqrt(dx * dx + dy * dy);
@@ -365,7 +388,8 @@ public class Renderer {
 
                 if (!shadow.seen) {
                     shadow.seen = true;
-                    shadow.reactToPlayer(soundManager);
+                    int duration = 2000 + random.nextInt(3000);
+                    shadow.reactToPlayer(soundManager, duration);
                 }
 
                 g.setColor(new Color(0, 0, 0, 150));
@@ -374,17 +398,18 @@ public class Renderer {
         }
     }
 
-
-    public void startHallucination() {
+    public void startHallucination(int duration) {
+        currentOverlay = dontMoveText;
         soundManager.stopSound("heartbeat");
         soundManager.playSound("fast heartbeat", true, false);
         Random random = new Random();
-        int duration = 2000 + random.nextInt(3000);
         long endTime = System.currentTimeMillis() + duration;
+        showText = true;
 
         Timer flickerTimer = new Timer(50, null);
         flickerTimer.addActionListener(e -> {
             toggleFlashlight();
+            showText = !showText;
 
             if (flashlightOn) {
                 bloodVisible = random.nextDouble() < 0.5;
@@ -398,7 +423,6 @@ public class Renderer {
                 flickerTimer.setDelay(nextDelay);
             }
         });
-
 
         if (!flashlightOn) toggleFlashlight();
         flickerTimer.setInitialDelay(300 + random.nextInt(400));
@@ -419,6 +443,7 @@ public class Renderer {
                 ((Timer) ev.getSource()).stop();
                 toggleFlashlight();
                 bloodVisible = false;
+                showText = false;
                 Timer delayTimer = new Timer(300, delayEv -> {
                     ((Timer) delayEv.getSource()).stop();
                     toggleFlashlight();
@@ -430,5 +455,21 @@ public class Renderer {
             bloodTimer.start();
         });
         offTimer.start();
+    }
+
+    public void drawOverlay(Graphics2D g) {
+        if (currentOverlay != null && showText) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastJitterTime > 100) {
+                jitterX = random.nextInt(30) - 15;
+                jitterY = random.nextInt(30) - 15;
+                lastJitterTime = currentTime;
+            }
+
+            int posX = baseCenterX + jitterX;
+            int posY = baseCenterY + jitterY;
+
+            g.drawImage(currentOverlay, posX, posY, null);
+        }
     }
 }
