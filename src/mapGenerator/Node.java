@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Node extends JButton {
-    Node parent;
     public boolean startPoint;
     public boolean finishPoint;
     boolean wall;
@@ -13,6 +12,7 @@ public class Node extends JButton {
     private final GridPanel gridPanel;
     public boolean visited;
     public boolean border;
+    public boolean shadow;
 
     public Node(int col, int row, GridPanel gridPanel) {
         this.col = col;
@@ -20,7 +20,9 @@ public class Node extends JButton {
         setBackground(Color.white);
         setBorder(BorderFactory.createLineBorder(Color.black));
         this.gridPanel = gridPanel;
+        border = false;
         visited = false;
+        shadow = false;
     }
 
     public void setStartPoint() {
@@ -41,10 +43,10 @@ public class Node extends JButton {
     }
 
     public void reset() {
-        this.parent = null;
-        this.wall = false;
+        wall = false;
         setBackground(Color.white);
         setForeground(Color.white);
+        shadow = false;
     }
 
 }

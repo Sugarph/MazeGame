@@ -18,13 +18,18 @@ public class MazeDFSAlgorithm {
     private int backtrackCount = 0;
     private final int finishBacktrackThreshold;
     private boolean backtrackingStarted = false;
+    private final List<Node> shadowNodes = new ArrayList<>();
+    private final Random random = new Random();
+    private final int minDistanceFromStart = 20;
+    private final int minDistanceBetweenShadows = 12;
+    private final int guaranteedShadows = 4;
+    private final int maxShadowChance = 5; // 5% chance after guaranteed
 
     public MazeDFSAlgorithm(Node[][] nodes, Node startNode, int maxCol, int maxRow) {
         this.nodes = nodes;
         this.maxCol = maxCol;
         this.maxRow = maxRow;
         this.stack = new Stack<>();
-        Random random = new Random();
         this.finishBacktrackThreshold = random.nextInt(4) + 2;
 
         for (int col = 0; col < maxCol; col++) {
@@ -50,6 +55,16 @@ public class MazeDFSAlgorithm {
                 stack.push(next);
                 current = next;
                 backtrackingStarted = false;
+
+                // Shadow spawning logic during generation
+                if (shadowNodes.size() < guaranteedShadows || random.nextInt(100) < maxShadowChance) {
+                    if (isValidShadowLocation(current)) {
+                        current.shadow = true;
+                        shadowNodes.add(current);
+                        current.setBackground(Color.yellow); // Visual indicator
+                    }
+                }
+
             } else {
                 if (!backtrackingStarted) {
                     backtrackingStarted = true;
@@ -82,8 +97,7 @@ public class MazeDFSAlgorithm {
         if (neighbors.isEmpty()) return null;
 
         Collections.shuffle(neighbors);
-        Collections.shuffle(neighbors);
-        return neighbors.getFirst();
+        return neighbors.get(0);
     }
 
     private void removeWallBetween(Node current, Node next) {
@@ -93,8 +107,20 @@ public class MazeDFSAlgorithm {
         nodes[col][row].toggleWall();
     }
 
+    private boolean isValidShadowLocation(Node node) {
+        // Ensure the node is sufficiently far from the start and other shadows
+        if (distance(node, nodes[0][0]) < minDistanceFromStart) return false;
+        for (Node shadow : shadowNodes) {
+            if (distance(node, shadow) < minDistanceBetweenShadows) return false;
+        }
+        return true;
+    }
+
+    private int distance(Node a, Node b) {
+        return Math.abs(a.col - b.col) + Math.abs(a.row - b.row);
+    }
+
     public boolean isFinished() {
         return generationFinished;
     }
 }
-

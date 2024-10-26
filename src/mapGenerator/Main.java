@@ -8,7 +8,7 @@ public class Main {
 
     public static void main(String[] args) {
         int nodePixelSize;
-        nodePixelSize = 15;
+        nodePixelSize = 12;
         JFrame window = new JFrame("Maze Generation");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
@@ -28,7 +28,6 @@ public class Main {
             }
         });
 
-        // Reset Button (renamed)
         JButton resetButton = new JButton("Reset");
         resetButton.addActionListener(_ -> gridPanel1.reset());
 

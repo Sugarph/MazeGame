@@ -9,12 +9,14 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
 
     private final Player player;
     private final MapGrid map;
-    private final RayCasting rayCasting;
+    private final Renderer rayCasting;
     private boolean keyW = false, keyS = false, keyA = false, keyD = false;
     private double lastFrameTime = System.nanoTime();
     private final Point centerPoint;
     private Robot robot;
     private final JFrame frame;
+    public final SoundManager soundManager;
+    private boolean isWalkingSoundPlaying = false;
 
     public Game(int[] mapData, int mapWidth, int mapHeight, int tileSize) {
         map = new MapGrid(mapWidth, mapHeight, tileSize, mapData);
@@ -26,9 +28,12 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
                 break;
             }
         }
-
+        soundManager = new SoundManager();
         player = new Player(startX, startY, 90);
-        rayCasting = new RayCasting(player, map);
+        rayCasting = new Renderer(player, map);
+
+        // Initialize SoundManager and load sounds
+
 
         frame = new JFrame("Ray Casting Demo");
         frame.setSize(960, 640);
@@ -52,7 +57,7 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
             e.printStackTrace();
         }
 
-        Timer timer = new Timer(20, e -> {
+        Timer timer = new Timer(20, _ -> {
             double currentTime = System.currentTimeMillis();
             double deltaTime = (currentTime - lastFrameTime) / 1_000.0;
             lastFrameTime = currentTime;
@@ -66,7 +71,7 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        rayCasting.castRays(g2);
+        rayCasting.rayCasting(g2);
     }
 
     private void handleMovement(double deltaTime) {
@@ -80,6 +85,14 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
         if (movingForwardBackward && moveSideWay) {
             movementSpeed /= diagonalSpeedFactor;
             sideWaySpeed /= diagonalSpeedFactor;
+        }
+
+        if ((keyW || keyS || keyA || keyD) && !isWalkingSoundPlaying) {
+            soundManager.playSound("walking", true, false);
+            isWalkingSoundPlaying = true;
+        } else if (!(keyW || keyS || keyA || keyD) && isWalkingSoundPlaying) {
+            soundManager.stopSound("walking");  // Stop walking sound
+            isWalkingSoundPlaying = false;
         }
 
         if (keyW && !map.WallAtTile((int) (player.x + player.deltaX * movementSpeed), (int) (player.y + player.deltaY * movementSpeed))) {
@@ -133,7 +146,5 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
     }
 
     @Override
-    public void mouseDragged(MouseEvent e) {
-        mouseMoved(e);
-    }
+    public void mouseDragged(MouseEvent e) {}
 }

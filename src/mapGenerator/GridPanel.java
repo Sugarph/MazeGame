@@ -47,7 +47,7 @@ public class GridPanel extends JPanel {
         if (isRunning) return;
         isRunning = true;
         dfsMaze = new MazeDFSAlgorithm(nodes, startNode, maxCol, maxRow);
-        Timer timer = new Timer(25, e -> {
+        Timer timer = new Timer(5, e -> {
             dfsMaze.generateMazeStep();
             repaint();
             if (dfsMaze.isFinished()) {
@@ -86,18 +86,19 @@ public class GridPanel extends JPanel {
                 Node node = nodes[col][row];
 
                 if (node.startPoint) {
-                    gridArray[index] = 3; // Start point
+                    gridArray[index] = 3;
                 } else if (node.finishPoint) {
-                    gridArray[index] = 4; // Finish point
+                    gridArray[index] = 4;
                 } else if (node.wall) {
-                    gridArray[index] = 1; // Wall
+                    gridArray[index] = 1;
+                } else if (node.shadow) {
+                    gridArray[index] = 5;
                 } else {
-                    gridArray[index] = 0; // Empty space
+                    gridArray[index] = 0;
                 }
                 index++;
             }
         }
         return gridArray;
     }
-
 }
