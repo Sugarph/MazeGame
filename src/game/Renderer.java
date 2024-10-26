@@ -12,26 +12,23 @@ import java.util.Random;
 
 public class Renderer {
     private final Player player;
+    private final Game mainGame;
     private final MapGrid map;
     private final int tileSize;
-    double fogFactor;
-    private BufferedImage wallTexture, floorTexture, bloodWallTexture, dontMoveText, currentOverlay, finishTexture;
+    private double fogFactor;
     private boolean flashlightOn = true;
     private List<Shadow> shadows = new ArrayList<>();
-    private boolean bloodVisible;
     private SoundManager soundManager;
     private double[] depthArray = new double[240];
-    private boolean showText = false;
-    private int baseCenterX, baseCenterY;
+    private boolean bloodVisible = false, showText = false, overlayChanged = false, applyFlashlight = true, endFadePlayed = false, fadeInProgress = false;
     private Random random;
-    private long lastJitterTime = 0;
-    private int jitterX = 0;
-    private int jitterY = 0;
+    private double lastJitterTime = 0;
+    private int jitterX = 0, jitterY = 0, encounterCount = 0, fadeAlpha = 0;
+    private BufferedImage wallTexture, floorTexture, bloodWallTexture, dontMoveText, currentOverlay, finishTexture, stayStillText, notThisTime, run;
 
-    public Renderer(Player player, MapGrid map) {
+    public Renderer(Player player, Game mainGame, MapGrid map) {
+        this.mainGame = mainGame;
         this.soundManager = new SoundManager();
-        soundManager.playSound("heartbeat", true, false);
-        bloodVisible = false;
         this.player = player;
         this.map = map;
         this.tileSize = map.tileSize;
@@ -44,12 +41,11 @@ public class Renderer {
         }
         random = new Random();
         loadTextures();
-        startHallucination(2000 + random.nextInt(3000));
-        baseCenterX = (960 - dontMoveText.getWidth()) / 2; // Calculate the base center position
-        baseCenterY = (640 - dontMoveText.getHeight()) / 2;
+        startHallucination(2000 + random.nextInt(3000), false);
 
     }
 
+    //I should make texture manager ;-;
     private void loadTextures() {
         try {
             wallTexture = ImageIO.read(new File("sprites/Mainwall.png"));
@@ -57,6 +53,9 @@ public class Renderer {
             floorTexture = ImageIO.read(new File("sprites/Mainwall.png"));
             finishTexture = ImageIO.read(new File("sprites/Pentagramwall.png"));
             dontMoveText = ImageIO.read(new File("sprites/Dontmove.png"));
+            stayStillText = ImageIO.read(new File("sprites/Staystill.png"));
+            notThisTime = ImageIO.read(new File("sprites/Notthistime.png"));
+            run = ImageIO.read(new File("sprites/Run.png"));
             currentOverlay = dontMoveText;
         } catch (IOException e) {
             e.printStackTrace();
@@ -70,24 +69,22 @@ public class Renderer {
             double wallDistance = castRay(rayAngle, g, rayIndex);
             depthArray[rayIndex] = wallDistance;
         }
+        soundManager.playSound("heartbeat", true, false);
+        drawFadeEffect(g);
         drawShadows(g);
-        flashlightEffect(g);
+        flashlightEffect(g, applyFlashlight);
         drawOverlay(g);
+        checkEndCondition();
     }
 
     public double castRay(double rayAngle, Graphics2D g, int rayIndex) {
-        double closestDistance;
-        double verticalDistance = 1000;
-        double horizontalDistance = 1000;
-        double verticalHitX = 0;
-        double verticalHitY = 0;
-        double horizontalHitX = 0;
-        double horizontalHitY = 0;
+        double closestDistance, verticalDistance = 1000, horizontalDistance = 1000;
+        double verticalHitX = 0, verticalHitY = 0, horizontalHitX = 0, horizontalHitY = 0;
         int depthOfField = 0;
         double tangent = Math.tan(Math.toRadians(rayAngle));
         boolean isVerticalHit;
         double hitX, hitY;
-        int mapX = 0, mapY = 0;
+        int mapX, mapY;
 
         // Check Vertical
         double rayX = 0, rayY = 0, stepX = 0, stepY = 0;
@@ -148,13 +145,6 @@ public class Renderer {
             rayY += stepY;
             depthOfField++;
         }
-
-
-        //Fix fisheye effect
-        double angleDifference = player.angle - rayAngle;
-        if (angleDifference < -180) angleDifference += 360;
-        if (angleDifference > 180) angleDifference -= 360;
-
         //Check which ray hit first
         if (verticalDistance < horizontalDistance) {
             isVerticalHit = true;
@@ -169,16 +159,14 @@ public class Renderer {
         }
         int wallTileX = (int) hitX / tileSize;
         int wallTileY = (int) hitY / tileSize;
-
-        // Choose the wall texture based on the tile value
         BufferedImage texture = (map.getTileValue(wallTileX, wallTileY) == 6 && bloodVisible) ? bloodWallTexture : wallTexture;
-
+        //Fix fisheye effect
+        double angleDifference = fixAngle(player.angle - rayAngle);
         closestDistance *= Math.cos(Math.toRadians(angleDifference));
+
         int textureWidth = texture.getWidth();
         int textureHeight = texture.getHeight();
-
-        double wallHeight = (tileSize * 640)  / closestDistance;
-        wallHeight *= 1.6;
+        double wallHeight = ((tileSize * 640)  / closestDistance) * 1.6;
         double textureYStep = textureHeight / wallHeight;
         double textureYOff = 0;
 
@@ -197,12 +185,10 @@ public class Renderer {
             textureX = (int) ((hitX % tileSize) * textureScaleFactor) % textureWidth;
         }
 
-
         drawWall(g, textureX, wallHeight, wallOffset, textureYStep, (int) textureYOff,  rayIndex, closestDistance, texture);
         drawFloor(g, rayAngle, rayIndex, (int) wallOffset, (int) wallHeight);
         drawCeiling(g, rayAngle, rayIndex, (int) wallOffset);
         return closestDistance;
-
     }
 
     //Using trigonometry for check where to draw the floor and ceiling
@@ -284,7 +270,7 @@ public class Renderer {
         double maxDistance = 300.0;
         double fogFactor = Math.min(1.0, distance / maxDistance);
 
-        // Loop through each pixel in the wall slice from the texture
+        //Loop through each pixel in the wall slice from the texture
         for (int y = 0; y < wallHeight; y++) {
             int wrappedTextureX = (int) textureX % textureWidth;
             int wrappedTextureY = (int) textureY % textureHeight;
@@ -294,14 +280,10 @@ public class Renderer {
 
             int pixelColor = texture.getRGB(wrappedTextureX, wrappedTextureY);
             Color wallColor = new Color(pixelColor);
-
             wallColor = getFogWallColor(fogFactor, wallColor);
 
-
             g.setColor(wallColor);
-
             g.fillRect(rayIndex * 4, (int) wallOffset + y, 4, 1);
-
             textureY += textureYstep;
         }
     }
@@ -331,11 +313,12 @@ public class Renderer {
 
     public void toggleFlashlight() {
         map.shuffleMap();
-        soundManager.playSound("lightSwitch", false, true); // Play the light switch sound
-        flashlightOn = !flashlightOn; // Toggle flashlight state
+        soundManager.playSound("lightSwitch", false, true);
+        flashlightOn = !flashlightOn;
     }
 
-    private void flashlightEffect(Graphics2D g) {
+    private void flashlightEffect(Graphics2D g, boolean applyFlashlight) {
+        if (!applyFlashlight) {return;}
         int flashlightRadius = 300;
         Point center = new Point(480, 320); // Assuming the screen's center point
 
@@ -361,23 +344,19 @@ public class Renderer {
     }
 
     public void drawShadows(Graphics2D g) {
-        int maxRenderDistance = 4 * tileSize;
-
         for (Shadow shadow : shadows) {
             if (!shadow.visible) {continue;}
             double dx = shadow.x - player.x;
             double dy = shadow.y - player.y;
             double distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance > maxRenderDistance) {
-                continue;
-            }
+            if (distance > 4 * tileSize) {continue;}
 
             double angleToShadow = Math.atan2(dy, dx);
             double angleDiff = angleToShadow - Math.toRadians(-player.angle);
 
-            if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-            if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+            if (angleDiff > Math.PI) {angleDiff -= 2 * Math.PI;}
+            if (angleDiff < -Math.PI) {angleDiff += 2 * Math.PI;}
 
             int shadowRayIndex = (int) ((angleDiff + Math.toRadians(30)) * (240 / Math.toRadians(60)));
 
@@ -398,26 +377,48 @@ public class Renderer {
         }
     }
 
-    public void startHallucination(int duration) {
-        currentOverlay = dontMoveText;
+    public void startHallucination(int duration, boolean shadowAct) {
+        if (shadowAct) {
+            encounterCount++;
+            switch (encounterCount) {
+                case 1:
+                    currentOverlay = dontMoveText;
+                    break;
+                case 2:
+                    currentOverlay = stayStillText;
+                    break;
+                case 3:
+                    currentOverlay = notThisTime;
+                    break;
+                default:
+                    currentOverlay = dontMoveText;
+                    break;
+            }
+        }
         soundManager.stopSound("heartbeat");
         soundManager.playSound("fast heartbeat", true, false);
         Random random = new Random();
-        long endTime = System.currentTimeMillis() + duration;
+        double startTime = System.currentTimeMillis();
+        double endTime = System.currentTimeMillis() + duration;
         showText = true;
 
         Timer flickerTimer = new Timer(50, null);
-        flickerTimer.addActionListener(e -> {
+        flickerTimer.addActionListener(_ -> {
             toggleFlashlight();
             showText = !showText;
-
+            if (encounterCount == 3 && !overlayChanged) {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - startTime >= duration / 2) {
+                    currentOverlay = run;
+                    overlayChanged = true;
+                }
+            }
             if (flashlightOn) {
                 bloodVisible = random.nextDouble() < 0.5;
             }
-
             if (System.currentTimeMillis() >= endTime) {
                 flickerTimer.stop();
-                endSequence();
+                lightSequence();
             } else {
                 int nextDelay = 300 + random.nextInt(400);
                 flickerTimer.setDelay(nextDelay);
@@ -429,23 +430,22 @@ public class Renderer {
         flickerTimer.start();
     }
 
-    private void endSequence() {
+    //This is a disaster of nested timer
+    private void lightSequence() {
         if (!flashlightOn) toggleFlashlight();
         bloodVisible = false;
+        showText = false;
         toggleFlashlight();
-        Timer offTimer = new Timer(1000, e -> {
-            ((Timer) e.getSource()).stop();
-
+        Timer offTimer = new Timer(1000, delay -> {
+            ((Timer) delay.getSource()).stop();
             toggleFlashlight();
             bloodVisible = true;
-
-            Timer bloodTimer = new Timer(5000, ev -> {
-                ((Timer) ev.getSource()).stop();
+            Timer bloodTimer = new Timer(5000, delay2 -> {
+                ((Timer) delay2.getSource()).stop();
                 toggleFlashlight();
                 bloodVisible = false;
-                showText = false;
-                Timer delayTimer = new Timer(300, delayEv -> {
-                    ((Timer) delayEv.getSource()).stop();
+                Timer delayTimer = new Timer(300, delay3 -> {
+                    ((Timer) delay3.getSource()).stop();
                     toggleFlashlight();
                     soundManager.stopSound("fast heartbeat");
                     soundManager.playSound("heartbeat", true, false);
@@ -459,17 +459,50 @@ public class Renderer {
 
     public void drawOverlay(Graphics2D g) {
         if (currentOverlay != null && showText) {
-            long currentTime = System.currentTimeMillis();
+            double currentTime = System.currentTimeMillis();
             if (currentTime - lastJitterTime > 100) {
                 jitterX = random.nextInt(30) - 15;
                 jitterY = random.nextInt(30) - 15;
                 lastJitterTime = currentTime;
             }
-
-            int posX = baseCenterX + jitterX;
-            int posY = baseCenterY + jitterY;
-
+            int posX = (960 - currentOverlay.getWidth()) / 2 + jitterX;
+            int posY = (640 - currentOverlay.getHeight()) / 2 + jitterY;
             g.drawImage(currentOverlay, posX, posY, null);
+        }
+    }
+
+    public void startEndGameAnimation() {
+        endFadePlayed = true;
+        fadeAlpha = 0;
+        fadeInProgress = true;
+        applyFlashlight = false;
+
+        Timer fadeTimer = new Timer(50, e -> {
+            fadeAlpha += 5;
+            if (fadeAlpha >= 255) {
+                fadeAlpha = 255;
+                mainGame.gameEnd();
+                soundManager.stopSound("fast heartbeat");
+                ((Timer) e.getSource()).stop();
+            }
+        });
+        fadeTimer.setRepeats(true);
+        fadeTimer.start();
+    }
+
+    public void drawFadeEffect(Graphics2D g) {
+        if (fadeInProgress) {
+            g.setColor(new Color(102, 0, 0, fadeAlpha));
+            g.fillRect(0, 0, 960, 640);
+        }
+    }
+
+    private boolean allItemsCollected = true;
+
+    public void checkEndCondition() {
+        if (endFadePlayed) {return;}
+        if (map.getTileValue((int) (player.x / tileSize), (int) (player.y / tileSize)) == 4 && allItemsCollected) {
+            startEndGameAnimation();
         }
     }
 }

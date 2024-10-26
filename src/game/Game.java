@@ -30,10 +30,7 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
         }
         soundManager = new SoundManager();
         player = new Player(startX, startY, 90);
-        rayCasting = new Renderer(player, map);
-
-        // Initialize SoundManager and load sounds
-
+        rayCasting = new Renderer(player,this, map);
 
         frame = new JFrame("Ray Casting Demo");
         frame.setSize(960, 640);
@@ -67,6 +64,10 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
         timer.start();
     }
 
+    public void gameEnd() {
+        frame.dispose();
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -91,7 +92,7 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
             soundManager.playSound("walking", true, false);
             isWalkingSoundPlaying = true;
         } else if (!(keyW || keyS || keyA || keyD) && isWalkingSoundPlaying) {
-            soundManager.stopSound("walking");  // Stop walking sound
+            soundManager.stopSound("walking");
             isWalkingSoundPlaying = false;
         }
 

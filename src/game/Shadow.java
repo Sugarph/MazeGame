@@ -19,7 +19,7 @@ public class Shadow {
     public void reactToPlayer(SoundManager soundManager, int duration) {
         System.out.println("Shadow spotted!");
         soundManager.playSound("shadow", false, true);
-        renderer.startHallucination(duration);
+        renderer.startHallucination(duration, true);
         Timer timer = new Timer(duration + 1000, e -> {
             visible = false;
             ((Timer) e.getSource()).stop();
