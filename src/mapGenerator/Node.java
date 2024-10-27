@@ -7,12 +7,15 @@ public class Node extends JButton {
     public boolean startPoint;
     public boolean finishPoint;
     boolean wall;
-    public int col;
-    public int row;
+    public int col, row, x, y;
     private final GridPanel gridPanel;
     public boolean visited;
     public boolean border;
     public boolean shadow;
+    public int gCost;
+    public int hCost;
+    public int fCost;
+    public Node parent;
 
     public Node(int col, int row, GridPanel gridPanel) {
         this.col = col;
@@ -29,6 +32,11 @@ public class Node extends JButton {
         setBackground(Color.green);
         startPoint = true;
         gridPanel.startNode = this;
+    }
+
+    public void setCoordinates() {
+        this.x = col * 64 + 32;
+        this.y = row * 64 + 32;
     }
 
     public void setFinishPoint() {

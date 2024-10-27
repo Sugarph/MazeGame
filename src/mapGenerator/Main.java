@@ -33,8 +33,8 @@ public class Main {
 
         JButton startGameButton = new JButton("Start Game");
         startGameButton.addActionListener(_ -> {
-            window.dispose();
-            Game game = new Game(gridPanel1.arrayConverter(), gridPanel1.maxCol, gridPanel1.maxRow, 64);
+            //window.dispose();
+            Game game = new Game(gridPanel1.arrayConverter(), gridPanel1.maxCol, gridPanel1.maxRow, 64, gridPanel1);
         });
         Timer updateTimer = new Timer(25, _ -> {
             mazeButton.setEnabled(!gridPanel1.isRunning && !gridPanel1.isFinished);

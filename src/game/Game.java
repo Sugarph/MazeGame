@@ -1,5 +1,7 @@
 package game;
 
+import mapGenerator.GridPanel;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -9,7 +11,7 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
 
     private final Player player;
     private final MapGrid map;
-    private final Renderer rayCasting;
+    private final Renderer renderer;
     private boolean keyW = false, keyS = false, keyA = false, keyD = false;
     private double lastFrameTime = System.nanoTime();
     private final Point centerPoint;
@@ -17,8 +19,10 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
     private final JFrame frame;
     public final SoundManager soundManager;
     private boolean isWalkingSoundPlaying = false;
+    GridPanel gridPanel;
 
-    public Game(int[] mapData, int mapWidth, int mapHeight, int tileSize) {
+    public Game(int[] mapData, int mapWidth, int mapHeight, int tileSize, GridPanel gridPanel) {
+        this.gridPanel = gridPanel;
         map = new MapGrid(mapWidth, mapHeight, tileSize, mapData);
         int startX = 0, startY = 0;
         for (int i = 0; i < mapData.length; i++) {
@@ -30,7 +34,7 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
         }
         soundManager = new SoundManager();
         player = new Player(startX, startY, 90);
-        rayCasting = new Renderer(player,this, map);
+        renderer = new Renderer(player,this, map);
 
         frame = new JFrame("Ray Casting Demo");
         frame.setSize(960, 640);
@@ -60,19 +64,22 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
             lastFrameTime = currentTime;
             handleMovement(deltaTime);
             repaint();
+            for (Shadow shadow : renderer.shadows) {
+                shadow.updatePosition(player.x, player.y, gridPanel);
+            }
         });
         timer.start();
     }
 
     public void gameEnd() {
-        frame.dispose();
+        System.exit(0);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        rayCasting.rayCasting(g2);
+        renderer.rayCasting(g2);
     }
 
     private void handleMovement(double deltaTime) {

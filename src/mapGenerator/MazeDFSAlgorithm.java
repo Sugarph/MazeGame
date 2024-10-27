@@ -61,7 +61,7 @@ public class MazeDFSAlgorithm {
                     if (distanceCheck(current)) {
                         current.shadow = true;
                         shadowNodes.add(current);
-                        current.setBackground(Color.yellow); // Visual indicator
+                        current.setBackground(Color.yellow);
                     }
                 }
 
@@ -97,7 +97,7 @@ public class MazeDFSAlgorithm {
         if (neighbors.isEmpty()) return null;
 
         Collections.shuffle(neighbors);
-        return neighbors.get(0);
+        return neighbors.getFirst();
     }
 
     private void removeWallBetween(Node current, Node next) {

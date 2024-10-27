@@ -5,8 +5,8 @@ import java.awt.*;
 
 public class GridPanel extends JPanel {
     public Node[][] nodes;
-    final int maxCol;
-    final int maxRow;
+    public final int maxCol;
+    public final int maxRow;
     private MazeDFSAlgorithm dfsMaze;
     public Node startNode, finishNode;
     public boolean isRunning;
@@ -85,6 +85,7 @@ public class GridPanel extends JPanel {
         for (int col = 0; col < maxCol; col++) {
             for (int row = 0; row < maxRow; row++) {
                 Node node = nodes[col][row];
+                node.setCoordinates();
 
                 if (node.startPoint) {
                     gridArray[index] = 3;

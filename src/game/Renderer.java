@@ -17,7 +17,7 @@ public class Renderer {
     private final int tileSize;
     private double fogFactor;
     private boolean flashlightOn = true;
-    private List<Shadow> shadows = new ArrayList<>();
+    public List<Shadow> shadows = new ArrayList<>();
     private SoundManager soundManager;
     private double[] depthArray = new double[240];
     private boolean bloodVisible = false, showText = false, overlayChanged = false, applyFlashlight = true, endFadePlayed = false, fadeInProgress = false;
@@ -48,13 +48,13 @@ public class Renderer {
     //I should make texture manager ;-;
     private void loadTextures() {
         try {
-            wallTexture = ImageIO.read(new File("sprites/Mainwall.png"));
-            bloodWallTexture = ImageIO.read(new File("sprites/Bloodywall.png"));
-            floorTexture = ImageIO.read(new File("sprites/Mainwall.png"));
-            finishTexture = ImageIO.read(new File("sprites/Pentagramwall.png"));
-            dontMoveText = ImageIO.read(new File("sprites/Dontmove.png"));
-            stayStillText = ImageIO.read(new File("sprites/Staystill.png"));
-            notThisTime = ImageIO.read(new File("sprites/Notthistime.png"));
+            wallTexture = ImageIO.read(new File("sprites/MainWall.png"));
+            bloodWallTexture = ImageIO.read(new File("sprites/BloodyWall.png"));
+            floorTexture = ImageIO.read(new File("sprites/MainWall.png"));
+            finishTexture = ImageIO.read(new File("sprites/PentagramWall.png"));
+            dontMoveText = ImageIO.read(new File("sprites/DontMove.png"));
+            stayStillText = ImageIO.read(new File("sprites/StayStill.png"));
+            notThisTime = ImageIO.read(new File("sprites/NotThisTimeOverlay.png"));
             run = ImageIO.read(new File("sprites/Run.png"));
             currentOverlay = dontMoveText;
         } catch (IOException e) {
