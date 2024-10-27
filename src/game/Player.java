@@ -14,7 +14,7 @@ public class Player {
 
     public void updatePitch(double deltaPitch) {
         pitch += deltaPitch;
-        pitch = Math.max(-120, Math.min(160, pitch));  // Limit the pitch angle between -90 and 90 degrees
+        pitch = Math.max(-120, Math.min(160, pitch));
     }
 
     public void updateAngle(double deltaAngle) {

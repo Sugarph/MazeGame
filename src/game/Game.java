@@ -34,7 +34,7 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
         }
         soundManager = new SoundManager();
         player = new Player(startX, startY, 90);
-        renderer = new Renderer(player,this, map);
+        renderer = new Renderer(player, this, map);
 
         frame = new JFrame("Ray Casting Demo");
         frame.setSize(960, 640);
@@ -139,7 +139,8 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+    }
 
     @Override
     public void mouseMoved(MouseEvent e) {
@@ -154,5 +155,6 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
     }
 
     @Override
-    public void mouseDragged(MouseEvent e) {}
+    public void mouseDragged(MouseEvent e) {
+    }
 }

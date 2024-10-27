@@ -12,6 +12,7 @@ public class Node extends JButton {
     public boolean visited;
     public boolean border;
     public boolean shadow;
+    public boolean searched, open;
     public int gCost;
     public int hCost;
     public int fCost;
@@ -35,8 +36,8 @@ public class Node extends JButton {
     }
 
     public void setCoordinates() {
-        this.x = col * 64 + 32;
-        this.y = row * 64 + 32;
+        this.y = col * 64 + 32;
+        this.x = row * 64 + 32;
     }
 
     public void setFinishPoint() {

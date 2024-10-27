@@ -13,31 +13,24 @@ public class AStar {
     private final PriorityQueue<Node> openList;
     private final ArrayList<Node> checkedList;
 
-    public AStar(Node[][] nodes, Node start, Node finish, int maxCol, int maxRow) {
+    public AStar(Node[][] nodes, Node start, Node finish, int maxCol, int maxRow, GridPanel gridPanel) {
         this.nodes = nodes;
         this.finish = finish;
         this.maxCol = maxCol;
         this.maxRow = maxRow;
         goalReached = false;
-
+        gridPanel.resetParent();
         //priority based on fCost and tie-breaking with hCost
         Comparator<Node> comparator = Comparator.comparingInt((Node n) -> n.fCost)
                 .thenComparingInt(n -> n.hCost);
         openList = new PriorityQueue<>(comparator);
         checkedList = new ArrayList<>();
-        start.gCost = 0;
-        start.hCost = getDistance(start, finish);
-        start.fCost = start.gCost + start.hCost;
         openList.add(start);
     }
 
     // A* algorithm
     public void runAStar() {
         while (!goalReached && !openList.isEmpty()) {
-            if (openList.isEmpty()) {
-                return;
-            }
-
             Node current = openList.poll();
             checkedList.add(current);
             current.searched = true;
@@ -55,15 +48,12 @@ public class AStar {
                     (current.col + 1 < maxCol) ? nodes[current.col + 1][current.row] : null
             };
 
-            // Set parent to trace later
             for (Node neighbor : neighbors) {
                 if (neighbor == null || neighbor.wall || checkedList.contains(neighbor)) {
                     continue;
                 }
-
                 // Calculate the gCost
                 int newGCost = current.gCost + getDistance(current, neighbor);
-
                 // Check if the path is shorter
                 if (newGCost < neighbor.gCost || !openList.contains(neighbor)) {
                     neighbor.gCost = newGCost;
@@ -103,9 +93,5 @@ public class AStar {
 
     public boolean isGoalReached() {
         return goalReached;
-    }
-
-    public boolean failToReach() {
-        return openList.isEmpty();
     }
 }

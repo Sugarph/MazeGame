@@ -77,6 +77,14 @@ public class GridPanel extends JPanel {
         isFinished = false;
         isRunning = false;
     }
+    public void resetParent() {
+        for (int col = 0; col < maxCol; col++) {
+            for (int row = 0; row < maxRow; row++) {
+                nodes[col][row].parent = null;
+
+            }
+        }
+    }
 
     public int[] arrayConverter() {
         int[] gridArray = new int[maxCol * maxRow];

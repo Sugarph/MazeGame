@@ -18,10 +18,10 @@ public class Renderer {
     private double fogFactor;
     private boolean flashlightOn = true;
     public List<Shadow> shadows = new ArrayList<>();
-    private SoundManager soundManager;
-    private double[] depthArray = new double[240];
+    private final SoundManager soundManager;
+    private final double[] depthArray = new double[240];
     private boolean bloodVisible = false, showText = false, overlayChanged = false, applyFlashlight = true, endFadePlayed = false, fadeInProgress = false;
-    private Random random;
+    private final Random random;
     private double lastJitterTime = 0;
     private int jitterX = 0, jitterY = 0, encounterCount = 0, fadeAlpha = 0;
     private BufferedImage wallTexture, floorTexture, bloodWallTexture, dontMoveText, currentOverlay, finishTexture, stayStillText, notThisTime, run;
@@ -35,13 +35,13 @@ public class Renderer {
         for (int y = 0; y < map.height; y++) {
             for (int x = 0; x < map.width; x++) {
                 if (map.getTileValue(x, y) == 5) {
-                    shadows.add(new Shadow(x * tileSize + tileSize/2, y * tileSize + tileSize/2, this));
+                    shadows.add(new Shadow(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, this));
                 }
             }
         }
         random = new Random();
         loadTextures();
-        startHallucination(2000 + random.nextInt(3000), false);
+        //startHallucination(2000 + random.nextInt(3000), false);
 
     }
 
@@ -77,6 +77,7 @@ public class Renderer {
         checkEndCondition();
     }
 
+    //Ray casting method using DDA
     public double castRay(double rayAngle, Graphics2D g, int rayIndex) {
         double closestDistance, verticalDistance = 1000, horizontalDistance = 1000;
         double verticalHitX = 0, verticalHitY = 0, horizontalHitX = 0, horizontalHitY = 0;
@@ -166,12 +167,12 @@ public class Renderer {
 
         int textureWidth = texture.getWidth();
         int textureHeight = texture.getHeight();
-        double wallHeight = ((tileSize * 640)  / closestDistance) * 1.6;
+        double wallHeight = ((tileSize * 640) / closestDistance) * 1.6;
         double textureYStep = textureHeight / wallHeight;
         double textureYOff = 0;
 
-        if (wallHeight  > 640 * 1.6) {
-            textureYOff =  (wallHeight - 640 * 1.6) / 2;
+        if (wallHeight > 640 * 1.6) {
+            textureYOff = (wallHeight - 640 * 1.6) / 2;
             wallHeight = 640 * 1.6;
         }
         double wallOffset = (320 - wallHeight / 2) + player.pitch;
@@ -185,7 +186,7 @@ public class Renderer {
             textureX = (int) ((hitX % tileSize) * textureScaleFactor) % textureWidth;
         }
 
-        drawWall(g, textureX, wallHeight, wallOffset, textureYStep, (int) textureYOff,  rayIndex, closestDistance, texture);
+        drawWall(g, textureX, wallHeight, wallOffset, textureYStep, (int) textureYOff, rayIndex, closestDistance, texture);
         drawFloor(g, rayAngle, rayIndex, (int) wallOffset, (int) wallHeight);
         drawCeiling(g, rayAngle, rayIndex, (int) wallOffset);
         return closestDistance;
@@ -209,16 +210,16 @@ public class Renderer {
             double worldX = player.x / 2 + Math.cos(deg) * 320 * 1.6 * 32 / dy / raFix;
             double worldY = player.y / 2 - Math.sin(deg) * 320 * 1.6 * 32 / dy / raFix;
 
-            int tileX = (int) (worldX / tileSize*2);
-            int tileY = (int) (worldY / tileSize*2);
+            int tileX = (int) (worldX / tileSize * 2);
+            int tileY = (int) (worldY / tileSize * 2);
 
             BufferedImage textureToUse = floorTexture;
             if (map.getTileValue(tileX, tileY) == 4) {
                 textureToUse = finishTexture;
             }
             //find texture coordinates
-            double textureX = Math.abs((int) worldX * textureScaleFactor *2);
-            double textureY = Math.abs((int) worldY * textureScaleFactor *2);
+            double textureX = Math.abs((int) worldX * textureScaleFactor * 2);
+            double textureY = Math.abs((int) worldY * textureScaleFactor * 2);
 
             int actualTextureX = (int) (textureX % textureWidth);
             int actualTextureY = (int) (textureY % textureHeight);
@@ -318,7 +319,9 @@ public class Renderer {
     }
 
     private void flashlightEffect(Graphics2D g, boolean applyFlashlight) {
-        if (!applyFlashlight) {return;}
+        if (!applyFlashlight) {
+            return;
+        }
         int flashlightRadius = 300;
         Point center = new Point(480, 320); // Assuming the screen's center point
 
@@ -345,18 +348,26 @@ public class Renderer {
 
     public void drawShadows(Graphics2D g) {
         for (Shadow shadow : shadows) {
-            if (!shadow.visible) {continue;}
+            if (!shadow.visible) {
+                continue;
+            }
             double dx = shadow.x - player.x;
             double dy = shadow.y - player.y;
             double distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance > 4 * tileSize) {continue;}
+            if (distance > 4 * tileSize) {
+                continue;
+            }
 
             double angleToShadow = Math.atan2(dy, dx);
             double angleDiff = angleToShadow - Math.toRadians(-player.angle);
 
-            if (angleDiff > Math.PI) {angleDiff -= 2 * Math.PI;}
-            if (angleDiff < -Math.PI) {angleDiff += 2 * Math.PI;}
+            if (angleDiff > Math.PI) {
+                angleDiff -= 2 * Math.PI;
+            }
+            if (angleDiff < -Math.PI) {
+                angleDiff += 2 * Math.PI;
+            }
 
             int shadowRayIndex = (int) ((angleDiff + Math.toRadians(30)) * (240 / Math.toRadians(60)));
 
@@ -497,10 +508,12 @@ public class Renderer {
         }
     }
 
-    private boolean allItemsCollected = true;
+    private final boolean allItemsCollected = true;
 
     public void checkEndCondition() {
-        if (endFadePlayed) {return;}
+        if (endFadePlayed) {
+            return;
+        }
         if (map.getTileValue((int) (player.x / tileSize), (int) (player.y / tileSize)) == 4 && allItemsCollected) {
             startEndGameAnimation();
         }

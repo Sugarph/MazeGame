@@ -20,7 +20,7 @@ public class MazeDFSAlgorithm {
     private boolean backtrackingStarted = false;
     private final List<Node> shadowNodes = new ArrayList<>();
     private final Random random = new Random();
-    private final int minDistanceFromStart = 20;
+    private final int minDistanceFromStart = 2;
     private final int minDistanceBetweenShadows = 12;
     private final int guaranteedShadows = 4;
     private final int maxShadowChance = 5; // 5% chance after guaranteed
