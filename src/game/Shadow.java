@@ -10,43 +10,85 @@ import java.util.ArrayList;
 
 public class Shadow {
     public double x, y;
-    public boolean seen;
-    public boolean visible;
+    public boolean seen, visible, chase;
+    private boolean pathCalculated = false;
+    private boolean needRecalculate = false;
     private final Renderer renderer;
     private final double speed = 4.0;
     private List<Node> currentPath = new ArrayList<>();
     private int currentPathIndex = 0;
+    private double lastDamageTime = 0;
 
     public Shadow(double x, double y, Renderer renderer) {
         this.x = x;
         this.y = y;
         visible = true;
         seen = false;
+        chase = false;
         this.renderer = renderer;
     }
 
-    public void reactToPlayer(SoundManager soundManager, int duration) {
+    public void reactToPlayer(SoundManager soundManager, int duration, Player player) {
+        int visibleDuration = (renderer.encounterCount == 3) ? duration + 10000 : duration + 1000;
         System.out.println("Shadow spotted!");
         soundManager.playSound("shadow", false, true);
-        renderer.startHallucination(duration, true);
-        Timer timer = new Timer(duration + 1000, e -> {
-            //visible = false;
+        renderer.hallucination(duration, true);
+        long startTime = System.currentTimeMillis();
+
+        Timer visibleTimer = new Timer(visibleDuration, e -> {
+            visible = false;
             ((Timer) e.getSource()).stop();
         });
-        timer.start();
+        visibleTimer.start();
+
+        if (renderer.encounterCount == 3) {
+            new Timer(2000, e -> {
+                chase = true;
+                visibleTimer.stop();
+                visibleTimer.setInitialDelay(visibleDuration + 5000);
+                visibleTimer.restart();
+                ((Timer) e.getSource()).stop();
+            }).start();
+        }
+
+        Timer loopCheck = new Timer(50, e -> {
+            if (player.moved && !chase) {
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                System.out.println(elapsedTime);
+                chase = true;
+                visibleTimer.stop();
+                visibleTimer.setInitialDelay((int) (visibleDuration - elapsedTime));
+                visibleTimer.restart();
+                ((Timer) e.getSource()).stop();
+            } else if (!visible) {
+                ((Timer) e.getSource()).stop();
+            }
+        });
+        loopCheck.setInitialDelay(1000); //Delay by 1 sec before check
+        loopCheck.start();
     }
 
-    private boolean pathCalculated = false;
-    private boolean needRecalculate = false;
-
-    public void updatePosition(double playerX, double playerY, GridPanel gridPanel) {
-        if (visible && seen) {
+    public void updatePosition(Player player, GridPanel gridPanel) {
+        if (visible && seen && chase) {
             int shadowCol = (int) (y / 64);
             int shadowRow = (int) (x / 64);
+            double dx = player.x - x;
+            double dy = player.y - y;
+
+            double distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 35) {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastDamageTime >= 1500) {
+                    player.hurt(20);
+                    System.out.println(player.hp);
+                    lastDamageTime = currentTime;
+                }
+            }
             if (!pathCalculated || needRecalculate) {
                 Node startNode = gridPanel.nodes[shadowCol][shadowRow];
-                int targetCol = (int) (playerY / 64);
-                int targetRow = (int) (playerX / 64);
+                int targetCol = (int) (player.y / 64);
+                int targetRow = (int) (player.x / 64);
                 Node targetNode = gridPanel.nodes[targetCol][targetRow];
                 AStar aStar = new AStar(gridPanel.nodes, startNode, targetNode, gridPanel.maxCol, gridPanel.maxRow, gridPanel);
                 aStar.runAStar();

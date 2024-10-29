@@ -23,14 +23,14 @@ public class MazeDFSAlgorithm {
     private final int minDistanceFromStart = 2;
     private final int minDistanceBetweenShadows = 12;
     private final int guaranteedShadows = 4;
-    private final int maxShadowChance = 5; // 5% chance after guaranteed
+    private final int maxShadowChance = 5;
 
     public MazeDFSAlgorithm(Node[][] nodes, Node startNode, int maxCol, int maxRow) {
         this.nodes = nodes;
         this.maxCol = maxCol;
         this.maxRow = maxRow;
         this.stack = new Stack<>();
-        this.finishBacktrackThreshold = random.nextInt(4) + 2;
+        this.finishBacktrackThreshold = random.nextInt(4) + 4;
 
         for (int col = 0; col < maxCol; col++) {
             for (int row = 0; row < maxRow; row++) {

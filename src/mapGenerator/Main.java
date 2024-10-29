@@ -5,10 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Main {
-
     public static void main(String[] args) {
-        int nodePixelSize;
-        nodePixelSize = 12;
         JFrame window = new JFrame("Maze Generation");
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setResizable(false);
@@ -19,7 +16,7 @@ public class Main {
         GridBagConstraints mainGrid = new GridBagConstraints();
         mainGrid.insets = new Insets(10, 10, 10, 10);
 
-        GridPanel gridPanel1 = new GridPanel(nodePixelSize);
+        GridPanel gridPanel1 = new GridPanel(12);
 
         JButton mazeButton = new JButton("Generate Maze");
         mazeButton.addActionListener(_ -> {
@@ -36,7 +33,7 @@ public class Main {
             //window.dispose();
             Game game = new Game(gridPanel1.arrayConverter(), gridPanel1.maxCol, gridPanel1.maxRow, 64, gridPanel1);
         });
-        Timer updateTimer = new Timer(25, _ -> {
+        Timer updateTimer = new Timer(50, _ -> {
             mazeButton.setEnabled(!gridPanel1.isRunning && !gridPanel1.isFinished);
             resetButton.setEnabled(!gridPanel1.isRunning && gridPanel1.isFinished);
             startGameButton.setEnabled(!gridPanel1.isRunning && gridPanel1.isFinished);

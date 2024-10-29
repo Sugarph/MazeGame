@@ -58,17 +58,19 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
             e.printStackTrace();
         }
 
-        Timer timer = new Timer(20, _ -> {
+        Timer update = new Timer(20, _ -> {
+            player.moved = false;
             double currentTime = System.currentTimeMillis();
             double deltaTime = (currentTime - lastFrameTime) / 1_000.0;
             lastFrameTime = currentTime;
             handleMovement(deltaTime);
             repaint();
             for (Shadow shadow : renderer.shadows) {
-                shadow.updatePosition(player.x, player.y, gridPanel);
+                shadow.updatePosition(player, gridPanel);
             }
+            if (player.hp <= 0) {gameEnd();}
         });
-        timer.start();
+        update.start();
     }
 
     public void gameEnd() {

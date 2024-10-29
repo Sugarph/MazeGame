@@ -74,6 +74,7 @@ public class GridPanel extends JPanel {
             }
         }
         startNode.setStartPoint();
+        finishNode = null;
         isFinished = false;
         isRunning = false;
     }

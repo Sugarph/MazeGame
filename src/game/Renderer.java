@@ -21,9 +21,10 @@ public class Renderer {
     private final SoundManager soundManager;
     private final double[] depthArray = new double[240];
     private boolean bloodVisible = false, showText = false, overlayChanged = false, applyFlashlight = true, endFadePlayed = false, fadeInProgress = false;
-    private final Random random;
+    private final Random random = new Random();
     private double lastJitterTime = 0;
-    private int jitterX = 0, jitterY = 0, encounterCount = 0, fadeAlpha = 0;
+    private int jitterX = 0, jitterY = 0, fadeAlpha = 0;
+    public int encounterCount =0;
     private BufferedImage wallTexture, floorTexture, bloodWallTexture, dontMoveText, currentOverlay, finishTexture, stayStillText, notThisTime, run;
 
     public Renderer(Player player, Game mainGame, MapGrid map) {
@@ -39,9 +40,8 @@ public class Renderer {
                 }
             }
         }
-        random = new Random();
         loadTextures();
-        //startHallucination(2000 + random.nextInt(3000), false);
+        soundManager.playSound("heartbeat", true, false);
 
     }
 
@@ -69,7 +69,6 @@ public class Renderer {
             double wallDistance = castRay(rayAngle, g, rayIndex);
             depthArray[rayIndex] = wallDistance;
         }
-        soundManager.playSound("heartbeat", true, false);
         drawFadeEffect(g);
         drawShadows(g);
         flashlightEffect(g, applyFlashlight);
@@ -202,7 +201,7 @@ public class Renderer {
         for (int y = wallOffset + wallHeight; y < 640; y++) {
             double dy = (y - cameraHeight);
             int distance = (int) ((tileSize * 640) / dy);
-            fogFactor = Math.min(1.0, (double) (distance - 100) / 400);
+            fogFactor = Math.min(1.0, (double) (distance - 100) / 450);
             double deg = Math.toRadians(rayAngle);
             double raFix = Math.cos(Math.toRadians(fixAngle(player.angle - rayAngle)));
 
@@ -244,7 +243,7 @@ public class Renderer {
         for (int y = 0; y < wallOffset; y++) {
             double dy = cameraHeight - y;
             int distance = (int) ((tileSize * 640) / dy);
-            fogFactor = Math.min(1.0, (double) (distance - 100) / 400);
+            fogFactor = Math.min(1.0, (double) (distance - 100) / 450);
             double deg = Math.toRadians(rayAngle);
             double raFix = Math.cos(Math.toRadians(fixAngle(player.angle - rayAngle)));
 
@@ -264,12 +263,11 @@ public class Renderer {
         }
     }
 
-    private void drawWall(Graphics2D g, double textureX, double wallHeight, double wallOffset, double textureYstep, int textureYOff, int rayIndex, double distance, BufferedImage texture) {
+    private void drawWall(Graphics2D g, double textureX, double wallHeight, double wallOffset, double textureYStep, int textureYOff, int rayIndex, double distance, BufferedImage texture) {
         int textureWidth = texture.getWidth();
         int textureHeight = texture.getHeight();
-        double textureY = (textureYOff * textureYstep);
-        double maxDistance = 300.0;
-        double fogFactor = Math.min(1.0, distance / maxDistance);
+        double textureY = (textureYOff * textureYStep);
+        double fogFactor = Math.min(1.0, distance / 450);
 
         //Loop through each pixel in the wall slice from the texture
         for (int y = 0; y < wallHeight; y++) {
@@ -285,7 +283,7 @@ public class Renderer {
 
             g.setColor(wallColor);
             g.fillRect(rayIndex * 4, (int) wallOffset + y, 4, 1);
-            textureY += textureYstep;
+            textureY += textureYStep;
         }
     }
 
@@ -322,18 +320,18 @@ public class Renderer {
         if (!applyFlashlight) {
             return;
         }
-        int flashlightRadius = 300;
-        Point center = new Point(480, 320); // Assuming the screen's center point
+        int flashlightRadius = 350;
+        Point center = new Point(480, 320);
 
         if (flashlightOn) {
             RadialGradientPaint flashlight = new RadialGradientPaint(
                     center,
                     flashlightRadius,
-                    new float[]{0.0f, 0.5f, 1.0f}, // Adding a midpoint for a sharper transition
+                    new float[]{0.0f, 0.5f, 1.0f},
                     new Color[]{
-                            new Color(0, 0, 0, 0), // Center is fully transparent
-                            new Color(0, 0, 0, 100),     // Midpoint is semi-dark
-                            new Color(0, 0, 0, 252)      // Edge is nearly opaque
+                            new Color(0, 0, 0, 0),
+                            new Color(0, 0, 0, 100),
+                            new Color(0, 0, 0, 252)
                     }
             );
 
@@ -379,7 +377,7 @@ public class Renderer {
                 if (!shadow.seen) {
                     shadow.seen = true;
                     int duration = 2000 + random.nextInt(3000);
-                    shadow.reactToPlayer(soundManager, duration);
+                    shadow.reactToPlayer(soundManager, duration, player);
                 }
 
                 g.setColor(new Color(0, 0, 0, 150));
@@ -388,7 +386,7 @@ public class Renderer {
         }
     }
 
-    public void startHallucination(int duration, boolean shadowAct) {
+    public void hallucination(int duration, boolean shadowAct) {
         if (shadowAct) {
             encounterCount++;
             switch (encounterCount) {
@@ -408,6 +406,7 @@ public class Renderer {
         }
         soundManager.stopSound("heartbeat");
         soundManager.playSound("fast heartbeat", true, false);
+        System.out.println("Hallucination");
         Random random = new Random();
         double startTime = System.currentTimeMillis();
         double endTime = System.currentTimeMillis() + duration;
@@ -416,7 +415,7 @@ public class Renderer {
         Timer flickerTimer = new Timer(50, null);
         flickerTimer.addActionListener(_ -> {
             toggleFlashlight();
-            showText = !showText;
+            //showText = !showText;
             if (encounterCount == 3 && !overlayChanged) {
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - startTime >= duration / 2) {
@@ -508,13 +507,11 @@ public class Renderer {
         }
     }
 
-    private final boolean allItemsCollected = true;
-
     public void checkEndCondition() {
         if (endFadePlayed) {
             return;
         }
-        if (map.getTileValue((int) (player.x / tileSize), (int) (player.y / tileSize)) == 4 && allItemsCollected) {
+        if (map.getTileValue((int) (player.x / tileSize), (int) (player.y / tileSize)) == 4) {
             startEndGameAnimation();
         }
     }
