@@ -14,7 +14,7 @@ public class SoundManager {
         loadSound("walking", "sfx/walking.wav", 0.75f);
         loadSound("heartbeat", "sfx/heart-beat.wav", 0.75f);
         loadSound("fast heartbeat", "sfx/fast-heartbeat.wav", 0.85f);
-        loadSound("shadow", "sfx/jump-scare.wav", 0.85f);
+        loadSound("shadow", "sfx/jump-scare.wav", 0.80f);
     }
 
     private void loadSound(String name, String filePath, float initialVolume) {
