@@ -61,7 +61,6 @@ public class MazeDFSAlgorithm {
                     if (distanceCheck(current)) {
                         current.shadow = true;
                         shadowNodes.add(current);
-                        current.setBackground(Color.yellow);
                     }
                 }
 
