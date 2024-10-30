@@ -14,7 +14,7 @@ public class Shadow {
     private boolean pathCalculated = false;
     private boolean needRecalculate = false;
     private final Renderer renderer;
-    private final double speed = 4.0;
+    private final double speed = 4.25;
     private List<Node> currentPath = new ArrayList<>();
     private int currentPathIndex = 0;
     private double lastDamageTime = 0;
@@ -33,7 +33,7 @@ public class Shadow {
         System.out.println("Shadow spotted!");
         soundManager.playSound("shadow", false, true);
         renderer.hallucination(duration, true);
-        long startTime = System.currentTimeMillis();
+        double startTime = System.currentTimeMillis();
 
         Timer visibleTimer = new Timer(visibleDuration, e -> {
             visible = false;
@@ -53,7 +53,7 @@ public class Shadow {
 
         Timer loopCheck = new Timer(50, e -> {
             if (player.moved && !chase) {
-                long elapsedTime = System.currentTimeMillis() - startTime;
+                double elapsedTime = System.currentTimeMillis() - startTime;
                 System.out.println(elapsedTime);
                 chase = true;
                 visibleTimer.stop();
@@ -81,7 +81,7 @@ public class Shadow {
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - lastDamageTime >= 1500) {
                     player.hurt(20);
-                    System.out.println(player.hp);
+                    System.out.println(player.health);
                     lastDamageTime = currentTime;
                 }
             }

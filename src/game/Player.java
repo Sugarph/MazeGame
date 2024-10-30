@@ -1,12 +1,12 @@
 package game;
 
 public class Player {
-    public double x, y, angle, deltaX, deltaY, pitch, hp;
+    public double x, y, angle, deltaX, deltaY, pitch, health;
     public boolean moved;
 
 
     public Player(double startX, double startY, double startAngle) {
-        hp = 100;
+        health = 100;
         x = startX;
         y = startY;
         angle = startAngle;
@@ -16,7 +16,7 @@ public class Player {
     }
 
     public void hurt(double damage) {
-        hp -= damage;
+        health -= damage;
     }
 
     public void updatePitch(double deltaPitch) {

@@ -68,7 +68,7 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
             for (Shadow shadow : renderer.shadows) {
                 shadow.updatePosition(player, gridPanel);
             }
-            if (player.hp <= 0) {gameEnd();}
+            if (player.health <= 0) {gameEnd();}
         });
         update.start();
     }
@@ -81,7 +81,7 @@ public class Game extends JPanel implements KeyListener, MouseMotionListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        renderer.rayCasting(g2);
+        renderer.updater(g2);
     }
 
     private void handleMovement(double deltaTime) {

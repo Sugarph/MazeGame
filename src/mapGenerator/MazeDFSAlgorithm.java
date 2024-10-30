@@ -20,7 +20,7 @@ public class MazeDFSAlgorithm {
     private boolean backtrackingStarted = false;
     private final List<Node> shadowNodes = new ArrayList<>();
     private final Random random = new Random();
-    private final int minDistanceFromStart = 2;
+    private final int minDistanceFromStart = 20;
     private final int minDistanceBetweenShadows = 12;
     private final int guaranteedShadows = 4;
     private final int maxShadowChance = 5;
@@ -56,7 +56,7 @@ public class MazeDFSAlgorithm {
                 current = next;
                 backtrackingStarted = false;
 
-                // Shadow spawning logic during generation
+                //Shadow spawning logic
                 if (shadowNodes.size() < guaranteedShadows || random.nextInt(100) < maxShadowChance) {
                     if (distanceCheck(current)) {
                         current.shadow = true;

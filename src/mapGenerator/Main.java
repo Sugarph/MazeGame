@@ -30,7 +30,7 @@ public class Main {
 
         JButton startGameButton = new JButton("Start Game");
         startGameButton.addActionListener(_ -> {
-            //window.dispose();
+            window.dispose();
             Game game = new Game(gridPanel1.arrayConverter(), gridPanel1.maxCol, gridPanel1.maxRow, 64, gridPanel1);
         });
         Timer updateTimer = new Timer(50, _ -> {

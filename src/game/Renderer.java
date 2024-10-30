@@ -20,12 +20,12 @@ public class Renderer {
     public List<Shadow> shadows = new ArrayList<>();
     private final SoundManager soundManager;
     private final double[] depthArray = new double[240];
-    private boolean bloodVisible = false, showText = false, overlayChanged = false, applyFlashlight = true, endFadePlayed = false, fadeInProgress = false;
+    private boolean bloodVisible = false, showText = false, overlayChanged = false, endFadePlayed = false, fadeInProgress = false;
     private final Random random = new Random();
     private double lastJitterTime = 0;
     private int jitterX = 0, jitterY = 0, fadeAlpha = 0;
     public int encounterCount =0;
-    private BufferedImage wallTexture, floorTexture, bloodWallTexture, dontMoveText, currentOverlay, finishTexture, stayStillText, notThisTime, run;
+    private BufferedImage wallTexture, floorTexture, bloodWallTexture, dontMoveText, currentOverlay, finishTexture, stayStillText, notThisTime, run, shadowSprite;
 
     public Renderer(Player player, Game mainGame, MapGrid map) {
         this.mainGame = mainGame;
@@ -56,13 +56,14 @@ public class Renderer {
             stayStillText = ImageIO.read(new File("sprites/StayStill.png"));
             notThisTime = ImageIO.read(new File("sprites/NotThisTimeOverlay.png"));
             run = ImageIO.read(new File("sprites/Run.png"));
+            shadowSprite = ImageIO.read(new File("sprites/Shadow.png"));
             currentOverlay = dontMoveText;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void rayCasting(Graphics2D g) {
+    public void updater(Graphics2D g) {
         for (int rayIndex = 0; rayIndex < 240; rayIndex++) {  // Cast 240 rays
             double rayAngle = (player.angle + 30 - (double) rayIndex / 4) % 360;
             if (rayAngle < 0) rayAngle += 360;
@@ -71,9 +72,10 @@ public class Renderer {
         }
         drawFadeEffect(g);
         drawShadows(g);
-        flashlightEffect(g, applyFlashlight);
-        drawOverlay(g);
+        flashlightEffect(g);
         checkEndCondition();
+        drawOverlay(g);
+        drawHealthBar(g);
     }
 
     //Ray casting method using DDA
@@ -205,7 +207,7 @@ public class Renderer {
             double deg = Math.toRadians(rayAngle);
             double raFix = Math.cos(Math.toRadians(fixAngle(player.angle - rayAngle)));
 
-            // Find distance to floor using trigonometry
+            //Find distance to floor using trigonometry
             double worldX = player.x / 2 + Math.cos(deg) * 320 * 1.6 * 32 / dy / raFix;
             double worldY = player.y / 2 - Math.sin(deg) * 320 * 1.6 * 32 / dy / raFix;
 
@@ -269,7 +271,6 @@ public class Renderer {
         double textureY = (textureYOff * textureYStep);
         double fogFactor = Math.min(1.0, distance / 450);
 
-        //Loop through each pixel in the wall slice from the texture
         for (int y = 0; y < wallHeight; y++) {
             int wrappedTextureX = (int) textureX % textureWidth;
             int wrappedTextureY = (int) textureY % textureHeight;
@@ -316,8 +317,8 @@ public class Renderer {
         flashlightOn = !flashlightOn;
     }
 
-    private void flashlightEffect(Graphics2D g, boolean applyFlashlight) {
-        if (!applyFlashlight) {
+    private void flashlightEffect(Graphics2D g) {
+        if (endFadePlayed) {
             return;
         }
         int flashlightRadius = 350;
@@ -368,27 +369,51 @@ public class Renderer {
             }
 
             int shadowRayIndex = (int) ((angleDiff + Math.toRadians(30)) * (240 / Math.toRadians(60)));
+            int textureWidth = shadowSprite.getWidth();
+            int textureHeight = shadowSprite.getHeight();
 
             if (shadowRayIndex >= 0 && shadowRayIndex < 240 && distance < depthArray[shadowRayIndex]) {
-                double screenX = (960 / 2) + Math.tan(angleDiff) * 960;
+                double screenX = 480 + Math.tan(angleDiff) * 960;
                 int shadowSize = (int) (64 * 100 / distance);
                 shadowSize = Math.min(shadowSize, 640);
 
                 if (!shadow.seen) {
+                    encounterCount++;
                     shadow.seen = true;
                     int duration = 2000 + random.nextInt(3000);
                     shadow.reactToPlayer(soundManager, duration, player);
                 }
 
-                g.setColor(new Color(0, 0, 0, 150));
-                g.fillRect((int) screenX - shadowSize / 2, 320 - shadowSize / 2 + (int) (player.pitch), shadowSize, shadowSize);
+                int maxRenderSize = 64;
+                int scaleFactor = 10;
+
+                int pixelWidth = scaleFactor * shadowSize / maxRenderSize;
+                int pixelHeight = scaleFactor * shadowSize / maxRenderSize;
+
+                int textureRenderWidth = pixelWidth * maxRenderSize;
+                int textureRenderHeight = pixelHeight * maxRenderSize;
+                int offsetX = (int) (screenX - (double) textureRenderWidth / 2);
+                int offsetY = (int) (320 - (double) textureRenderHeight / 2 + player.pitch);
+
+                for (int x = 0; x < maxRenderSize; x++) {
+                    for (int y = 0; y < maxRenderSize; y++) {
+                        int textureX = (int) ((x / (double) maxRenderSize) * textureWidth);
+                        int textureY = (int) ((y / (double) maxRenderSize) * textureHeight);
+
+                        int color = shadowSprite.getRGB(textureX, textureY);
+                        int screenPosX = offsetX + x * pixelWidth;
+                        int screenPosY = offsetY + y * pixelHeight;
+                        g.setColor(new Color(color, true));
+                        g.fillRect(screenPosX, screenPosY, pixelWidth, pixelHeight);
+                    }
+                }
+
             }
         }
     }
 
     public void hallucination(int duration, boolean shadowAct) {
         if (shadowAct) {
-            encounterCount++;
             switch (encounterCount) {
                 case 1:
                     currentOverlay = dontMoveText;
@@ -415,7 +440,6 @@ public class Renderer {
         Timer flickerTimer = new Timer(50, null);
         flickerTimer.addActionListener(_ -> {
             toggleFlashlight();
-            //showText = !showText;
             if (encounterCount == 3 && !overlayChanged) {
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - startTime >= duration / 2) {
@@ -435,7 +459,6 @@ public class Renderer {
             }
         });
 
-        if (!flashlightOn) toggleFlashlight();
         flickerTimer.setInitialDelay(300 + random.nextInt(400));
         flickerTimer.start();
     }
@@ -485,7 +508,6 @@ public class Renderer {
         endFadePlayed = true;
         fadeAlpha = 0;
         fadeInProgress = true;
-        applyFlashlight = false;
 
         Timer fadeTimer = new Timer(50, e -> {
             fadeAlpha += 5;
@@ -514,5 +536,23 @@ public class Renderer {
         if (map.getTileValue((int) (player.x / tileSize), (int) (player.y / tileSize)) == 4) {
             startEndGameAnimation();
         }
+    }
+
+    public void drawHealthBar(Graphics2D g) {
+        int healthBarWidth = 200;
+        int healthBarHeight = 20;
+        int healthBarX = 20;
+        int healthBarY = 20;
+
+        double healthPercent = Math.max(0, player.health / 100.0);
+
+        int filledWidth = (int) (healthBarWidth * healthPercent);
+
+        g.setColor(Color.darkGray);
+        g.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
+
+        g.setColor(new Color(102, 0, 0));
+        g.fillRect(healthBarX, healthBarY, filledWidth, healthBarHeight);
+
     }
 }
