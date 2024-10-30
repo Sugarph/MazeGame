@@ -48,15 +48,15 @@ public class Renderer {
     //I should make texture manager ;-;
     private void loadTextures() {
         try {
-            wallTexture = ImageIO.read(new File("sprites/MainWall.png"));
-            bloodWallTexture = ImageIO.read(new File("sprites/BloodyWall.png"));
-            floorTexture = ImageIO.read(new File("sprites/MainWall.png"));
-            finishTexture = ImageIO.read(new File("sprites/PentagramWall.png"));
-            dontMoveText = ImageIO.read(new File("sprites/DontMove.png"));
-            stayStillText = ImageIO.read(new File("sprites/StayStill.png"));
-            notThisTime = ImageIO.read(new File("sprites/NotThisTimeOverlay.png"));
-            run = ImageIO.read(new File("sprites/Run.png"));
-            shadowSprite = ImageIO.read(new File("sprites/Shadow.png"));
+            wallTexture = ImageIO.read(getClass().getResourceAsStream("/sprites/MainWall.png"));
+            bloodWallTexture = ImageIO.read(getClass().getResourceAsStream("/sprites/BloodyWall.png"));
+            floorTexture = ImageIO.read(getClass().getResourceAsStream("/sprites/MainWall.png"));
+            finishTexture = ImageIO.read(getClass().getResourceAsStream("/sprites/PentagramWall.png"));
+            dontMoveText = ImageIO.read(getClass().getResourceAsStream("/sprites/DontMove.png"));
+            stayStillText = ImageIO.read(getClass().getResourceAsStream("/sprites/StayStill.png"));
+            notThisTime = ImageIO.read(getClass().getResourceAsStream("/sprites/NotThisTimeOverlay.png"));
+            run = ImageIO.read(getClass().getResourceAsStream("/sprites/Run.png"));
+            shadowSprite = ImageIO.read(getClass().getResourceAsStream("/sprites/Shadow.png"));
             currentOverlay = dontMoveText;
         } catch (IOException e) {
             e.printStackTrace();

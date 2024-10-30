@@ -1,8 +1,9 @@
 package game;
 
 import javax.sound.sampled.*;
-import java.io.File;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,17 +11,17 @@ public class SoundManager {
     private final Map<String, Clip> soundClips = new HashMap<>();
 
     public SoundManager() {
-        loadSound("lightSwitch", "sfx/light-switch.wav", 0.9f);
-        loadSound("walking", "sfx/walking.wav", 0.75f);
-        loadSound("heartbeat", "sfx/heart-beat.wav", 0.75f);
-        loadSound("fast heartbeat", "sfx/fast-heartbeat.wav", 0.85f);
-        loadSound("shadow", "sfx/jump-scare.wav", 0.80f);
+        loadSound("lightSwitch", "/sfx/light-switch.wav", 0.9f);
+        loadSound("walking", "/sfx/walking.wav", 0.75f);
+        loadSound("heartbeat", "/sfx/heart-beat.wav", 0.75f);
+        loadSound("fast heartbeat", "/sfx/fast-heartbeat.wav", 0.85f);
+        loadSound("shadow", "/sfx/jump-scare.wav", 0.80f);
     }
 
     private void loadSound(String name, String filePath, float initialVolume) {
         try {
-            File soundFile = new File(filePath);
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundFile);
+            InputStream audioSrc = getClass().getResourceAsStream(filePath);
+            AudioInputStream audioIn = AudioSystem.getAudioInputStream(new BufferedInputStream(audioSrc));
             Clip clip = AudioSystem.getClip();
             clip.open(audioIn);
             soundClips.put(name, clip);
@@ -29,6 +30,7 @@ public class SoundManager {
             e.printStackTrace();
         }
     }
+
 
     public void playSound(String name, boolean loop, boolean resetIfPlaying) {
         Clip clip = soundClips.get(name);
