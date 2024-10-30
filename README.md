@@ -11,6 +11,10 @@ Objective of the game is just find the way out of the maze (without dying), That
 ## Warning
 This game contains jump scares and is not recommended for people with claustrophobia.
 
+## Note
+I know the code is very messy and unoptimized, but hey, it work!
+also I have no plan to expand it, so that shouldn't be a problem.
+
 ## Credit
 -Main & Test Wall https://pucci-games.itch.io/stones-brick-textures#google_vignette
 
